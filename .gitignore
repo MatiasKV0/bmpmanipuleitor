@@ -1,0 +1,11 @@
+# Archivos compilados
+*.o
+*.exe
+
+# Carpetas de build
+bin/
+obj/
+
+# Archivos temporales de Code::Blocks
+*.depend
+*.layout
