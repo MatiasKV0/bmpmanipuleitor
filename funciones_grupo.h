@@ -35,9 +35,9 @@ typedef struct {
     unsigned int contcolor;          // Colores importantes (0 si todos)
 } HEADER;
 
+#include "funciones_villan.h"
 #include "funciones_basso.h"
 #include "funciones_ereno.h"
-#include "funciones_villan.h"
 
 // Ereño, Tomas:
 // DNI: 44513506
