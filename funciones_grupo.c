@@ -2,214 +2,300 @@
 
 int procesar_imagen(int argc, char* argv[])
 {
-    FILE *archivoEntrada;
-    int status = TODO_OK;
-    char *nombreArchivo = NULL;
+    FILE *archivoEntrada  = NULL;
+    FILE *archivoEntrada2 = NULL;
 
+    HEADER header, header2;
+    int status = EXITO;
+
+    bool modoVerbose   = false;
+    bool soloValidar   = false;
+    bool mostrarInfo   = false;
+    bool mostrarAyuda  = false;
+
+    char *nombreArchivo  = NULL;   // 1er BMP
+    char *nombreArchivo2 = NULL;   // 2do BMP
+
+    bool hayConcatenacion = false;
+
+    //--------------------
+    // ARGUMENTOS
+    //--------------------
     for (int i = 1; i < argc; i++)
     {
-        if (argv[i][0] != '-')
+        if (strcmp(argv[i], "--help") == 0)
+            mostrarAyuda = true;
+        else if (strcmp(argv[i], "--verbose") == 0)
+            modoVerbose = true;
+        else if (strcmp(argv[i], "--validar") == 0)
+            soloValidar = true;
+        else if (strcmp(argv[i], "--info") == 0)
+            mostrarInfo = true;
+        else if (strcmp(argv[i], "--concatenar-horizontal") == 0)
+            hayConcatenacion = true;
+        else if (strcmp(argv[i], "--concatenar-vertical") == 0)
+            hayConcatenacion = true;
+        else if (argv[i][0] != '-')
         {
-            nombreArchivo = argv[i];
-            break;
+            if (!nombreArchivo)
+                nombreArchivo  = argv[i];                  // primero
+            else if (!nombreArchivo2)
+                nombreArchivo2 = argv[i];                  // segundo
+            else
+            {
+                printf("[ERROR] Se han ingresado demasiados Archivos.\n");
+                return ERROR_ARGS;
+            }
         }
     }
 
     if (!nombreArchivo)
     {
-        printf("No se proporciono el nombre del archivo de imagen.\n");
-        return ARCHIVO_NO_ENCONTRADO;
+        printf("[ERROR] No se proporciono el nombre del archivo.\n");
+        return ERROR_ARCH;
     }
 
+    if (hayConcatenacion)
+    {
+        if (!nombreArchivo2)
+        {
+            printf("[ERROR] La funcion concatenar requiere dos imagenes.\n");
+            return ERROR_ARGS;
+        }
+    }
+    else
+    {
+        if (nombreArchivo2)
+        {
+            printf("[ERROR] Solo la funcion concatenar acepta dos imagenes.\n");
+            return ERROR_ARGS;
+        }
+    }
+
+    //--------------------------
+    // UTILIDADES
+    //--------------------------
+
+    // --Help
+    if (mostrarAyuda)
+    {
+        imprimirHelp();
+        return EXITO;
+    }
+
+    // --Verbose
+    if (modoVerbose)
+    {
+        printf("[INFO] Iniciando bmpmanipuleitor...\n");
+        printf("[INFO] Argumentos detectados: ");
+        for (int i = 1; i < argc; i++) printf("%s ", argv[i]);
+        putchar('\n');
+    }
+
+    //--------------------------
+    // ABRIR PRIMER ARCHIVO
+    //--------------------------
+    if (modoVerbose) printf("[INFO] Cargando archivo: %s\n", nombreArchivo);
     archivoEntrada = fopen(nombreArchivo, "rb");
     if (!archivoEntrada)
     {
-        printf("Error al abrir el archivo de entrada: %s\n", nombreArchivo);
-        return ARCHIVO_NO_ENCONTRADO;
+        printf("[ERROR] No se pudo abrir el archivo: %s\n", nombreArchivo);
+        return ERROR_ARCH;
     }
+
+    if (modoVerbose) printf("[INFO] Validando header BMP...\n");
+    if (!leerHeader(archivoEntrada, &header))
+    {
+        printf("[ERROR] No se pudo leer el encabezado BMP.\n");
+        fclose(archivoEntrada);
+        return ERROR_BMP;
+    }
+
+    //--------------------------
+    // ABRIR SEGUNDO ARCHIVO (Solo si hay concatenacion)
+    //--------------------------
+    if (hayConcatenacion)
+    {
+        if (modoVerbose) printf("[INFO] Cargando archivo 2: %s\n", nombreArchivo2);
+        archivoEntrada2 = fopen(nombreArchivo2, "rb");
+        if (!archivoEntrada2)
+        {
+            printf("[ERROR] No se pudo abrir el archivo: %s\n", nombreArchivo2);
+            fclose(archivoEntrada);
+            return ERROR_ARCH;
+        }
+        if (modoVerbose) printf("[INFO] Validando header BMP...\n");
+        if (!leerHeader(archivoEntrada2, &header2))
+        {
+            printf("[ERROR] No se pudo leer el encabezado BMP.\n");
+            fclose(archivoEntrada2);
+            fclose(archivoEntrada);
+            return ERROR_BMP;
+        }
+    }
+
+    //--------------------------
+    // --validar
+    //--------------------------
+    if (soloValidar) printf("\nValidando %s...\n", nombreArchivo);
+    status = verificarArchivo(archivoEntrada, &header, soloValidar);
+    if (soloValidar && hayConcatenacion) printf("\nValidando %s...\n", nombreArchivo2);
+    if(hayConcatenacion) status = verificarArchivo(archivoEntrada2, &header2, soloValidar);
+    if (modoVerbose && !soloValidar)
+    {
+        printf("[INFO] '%s' ARCHIVO VALIDO - Dimensiones: %dx%d, Tamano: %u bytes\n",
+               nombreArchivo,header.ancho, header.alto, header.tamArchivo);
+        if(hayConcatenacion)
+        {
+            printf("[INFO] '%s' ARCHIVO VALIDO - Dimensiones: %dx%d, Tamano: %u bytes\n",
+                   nombreArchivo2,header2.ancho, header2.alto, header2.tamArchivo);
+        }
+    }
+
+    if (status != 0)
+    {
+        if (archivoEntrada2) fclose(archivoEntrada2);
+        fclose(archivoEntrada);
+        return status;
+    }
+
+    // --info
+    if (mostrarInfo)
+    {
+        imprimirInfo(&header,nombreArchivo);
+        if(archivoEntrada2) imprimirInfo(&header2,nombreArchivo2);
+    }
+
+    //-------------------
+    // FILTROS
+    //-------------------
+    int CantArch = 0;
 
     for (int i = 1; i < argc; i++)
     {
         char *igual = strchr(argv[i], '=');
-        if (igual != NULL)
+        if (igual)
         {
             *igual = '\0';
             const char *opcion = argv[i];
-            const char *valor = igual+1;
+            const char *valor  = igual + 1;
+            float porcentaje   = (float)atoi(valor);
 
-            float porcentaje = atoi(valor);
-            if(porcentaje<0 || porcentaje>100){
-                break;
+            if (porcentaje < 0 || porcentaje > 100)
+            {
+                printf("[ERROR] Parametro invalido en %s.\n", opcion);
+                status = ERROR_ARGS;
+                continue;
             }
 
             if (strcmp(opcion, "--tonalidad-roja") == 0)
             {
-                status = tonalidadRojo(archivoEntrada, porcentaje);
+                if (modoVerbose) printf("[INFO] Aplicando filtro: tonalidad roja (%d%%)\n", (int)porcentaje);
+                status = tonalidadRojo(&header, archivoEntrada, porcentaje, nombreArchivo);
+                CantArch++;
+            }
+            else if (strcmp(opcion, "--tonalidad-azul") == 0)
+            {
+                if (modoVerbose) printf("[INFO] Aplicando filtro: tonalidad azul (%d%%)\n", (int)porcentaje);
+                status = tonalidadAzul(&header, archivoEntrada, porcentaje, nombreArchivo);
+                CantArch++;
             }
             else if (strcmp(opcion, "--tonalidad-verde") == 0)
             {
-                status = tonalidadVerde(archivoEntrada);
+                if (modoVerbose) printf("[INFO] Aplicando filtro: tonalidad verde (%d%%)\n", (int)porcentaje);
+                status = tonalidadVerde(&header, archivoEntrada, porcentaje, nombreArchivo);
+                CantArch++;
+            }
+            else if (strcmp(opcion, "--recortar-imagen") == 0)
+            {
+                if (modoVerbose) printf("[INFO] Aplicando filtro: Recortar Imagen (%d%%)\n", (int)porcentaje);
+                status = recortePorcentaje(&header, archivoEntrada, porcentaje, nombreArchivo);
+                CantArch++;
             }
             else if (strcmp(opcion, "--aumentar-contraste") == 0)
             {
-                status = aumentarContraste(archivoEntrada);
+                if (modoVerbose) printf("[INFO] Aplicando filtro: Aumentar contraste\n");
+                status = aumentarContraste(&header, archivoEntrada, porcentaje, nombreArchivo);
+                CantArch++;
             }
-        }
-        else
-        {
-            if (strcmp(argv[i], "--negativo") == 0)
+            else if (strcmp(opcion, "--reducir-contraste") == 0)
             {
-                status = convertirNegativo(archivoEntrada);
+                if (modoVerbose) printf("[INFO] Aplicando filtro: Reducir contraste\n");
+                status = reducirContraste(&header, archivoEntrada, porcentaje, nombreArchivo);
+                CantArch++;
             }
-            else if (strcmp(argv[i], "--escala-de-grises") == 0)
+            else if (strcmp(opcion, "--achicar") == 0)
             {
-                status = blancoNegro(archivoEntrada);
+                if (modoVerbose) printf("[INFO] Aplicando filtro: Achicar imagen\n");
+                status = achicarImagen(&header, archivoEntrada, porcentaje, nombreArchivo);
+                CantArch++;
             }
         }
+        else if (strcmp(argv[i], "--negativo") == 0)
+        {
+            if (modoVerbose) printf("[INFO] Aplicando filtro: negativo\n");
+            status = convertirNegativo(&header, archivoEntrada, nombreArchivo);
+            CantArch++;
+        }
+        else if (strcmp(argv[i], "--escala-de-grises") == 0)
+        {
+            if (modoVerbose) printf("[INFO] Aplicando filtro: escala de grises\n");
+            status = escalaGrises(&header, archivoEntrada, nombreArchivo);
+            CantArch++;
+        }
+        else if (strcmp(argv[i], "--espejar-horizontal") == 0)
+        {
+            if (modoVerbose) printf("[INFO] Aplicando filtro: espejar horizontalmente\n");
+            status = espejarHorizontal(&header, archivoEntrada, nombreArchivo);
+            CantArch++;
+        }
+        else if (strcmp(argv[i], "--espejar-vertical") == 0)
+        {
+            if (modoVerbose) printf("[INFO] Aplicando filtro: espejar verticalmente\n");
+            status = espejarVertical(&header, archivoEntrada, nombreArchivo);
+            CantArch++;
+        }
+        else if (strcmp(argv[i], "--rotar-derecha") == 0)
+        {
+            if (modoVerbose) printf("[INFO] Aplicando filtro: Rotar Derecha \n");
+            status = rotar90gradosDerecha(&header, archivoEntrada, nombreArchivo);
+            CantArch++;
+        }
+        else if (strcmp(argv[i], "--rotar-izquierda") == 0)
+        {
+            if (modoVerbose) printf("[INFO] Aplicando filtro: Rotar Izquierda \n");
+            status = rotar90gradosIzquierda(&header, archivoEntrada, nombreArchivo);
+            CantArch++;
+        }
+        else if (strcmp(argv[i], "--concatenar-horizontal") == 0)
+        {
+            if (modoVerbose) printf("[INFO] Aplicando filtro: Concatenar Horizontal \n");
+            status = concatenarHorizontal(&header, archivoEntrada, nombreArchivo,
+                                          &header2, archivoEntrada2, nombreArchivo2);
+            CantArch++;
+        }
+        else if (strcmp(argv[i], "--concatenar-vertical") == 0)
+        {
+            if (modoVerbose) printf("[INFO] Aplicando filtro: Concatenar Vertical \n");
+            status = concatenarVertical(&header, archivoEntrada, nombreArchivo,
+                                        &header2, archivoEntrada2, nombreArchivo2);
+            CantArch++;
+        }
     }
 
-/*
-    for(int i=0; i<argc; i++)
+    if (modoVerbose)
     {
-        if(strcmp(argv[i],"--negativo")==0)
-        {
-            status= convertirNegativo(archivoEntrada);
-        }
-        else if (strcmp(argv[i],"--tonalidad-azul")==0)
-        {
-            status=tonalidadAzul(archivoEntrada);
-        }
-        else if (strcmp(argv[i],"--tonalidad-verde")==0)
-        {
-            status=tonalidadaVerde(archivoEntrada);
-        }
-        else if (strcmp(argv[i],"--tonalidad-roja")==0)
-        {
-            status=tonalidadaRojo(archivoEntrada,porcentaje);
-        }
-        else if (strcmp(argv[i],"--escala-de-grises")==0)
-        {
-            status=blancoNegro(archivoEntrada);
-        }
-        else if (strcmp(argv[i],"--aumentar-contraste")==0)
-        {
-            status=aumentarContraste(archivoEntrada);
-        }
-        else if (strcmp(argv[i],"--reducir-contraste")==0)
-        {
-            status=reducirContraste(archivoEntrada);
-        }
-        else if (strcmp(argv[i],"--recortar")==0)
-        {
-            status=recortarImagen(archivoEntrada);
-        }
-        else if (strcmp(argv[i],"--rotar-derecha")==0)
-        {
-            status=rotar90gradosDerecha(archivoEntrada);
-        }
-        else if (strcmp(argv[i],"--rotar-izquierda")==0)
-        {
-            status=rotar90gradosIzquierda(archivoEntrada);
-        }
-        else if (strcmp(argv[i],"--comodin")==0)
-        {
-            status=comodin(archivoEntrada);
-        }
+        if (CantArch == 1) printf("[INFO] Proceso finalizado - %d archivo generado.\n", CantArch);
+        else               printf("[INFO] Proceso finalizado - %d archivos generados.\n", CantArch);
     }
-    */
-
-    if(status == 0)
+    else
     {
-        printf("Todo OK");
+        printf("Proceso finalizado exitosamente.\n");
     }
-    fclose(archivoEntrada);
-    return TODO_OK;
+
+    if (archivoEntrada)
+        fclose(archivoEntrada);
+    if (archivoEntrada2)
+        fclose(archivoEntrada2);
+    return status;
 }
-
-METADATAgral cargaCabecera(FILE* archivoEntrada, FILE* archivoSalida)
-{
-    METADATAgral metadata;
-
-    fseek(archivoEntrada,0,SEEK_SET);
-    fseek(archivoSalida,0,SEEK_SET);
-    fread(&metadata.tipobm,sizeof(unsigned short),1,archivoEntrada);
-    fwrite(&metadata.tipobm,sizeof(unsigned short),1,archivoSalida);
-
-    fseek(archivoEntrada,2,SEEK_SET);
-    fseek(archivoSalida,2,SEEK_SET);
-    fread(&metadata.tamArchivo,sizeof(unsigned int),1,archivoEntrada);
-    fwrite(&metadata.tamArchivo,sizeof(unsigned int),1,archivoSalida);;
-
-    fseek(archivoEntrada,6,SEEK_SET);
-    fseek(archivoSalida,6,SEEK_SET);
-    fread(&metadata.reserva,sizeof(unsigned short),1,archivoEntrada);
-    fwrite(&metadata.reserva,sizeof(unsigned short),1,archivoSalida);
-
-    fseek(archivoEntrada,8,SEEK_SET);
-    fseek(archivoSalida,8,SEEK_SET);
-    fread(&metadata.reserva1,sizeof(unsigned short),1,archivoEntrada);
-    fwrite(&metadata.reserva1,sizeof(unsigned short),1,archivoSalida);
-
-    fseek(archivoEntrada,10,SEEK_SET);
-    fseek(archivoSalida,10,SEEK_SET);
-    fread(&metadata.comienzoImagen,sizeof(unsigned int),1,archivoEntrada);
-    fwrite(&metadata.comienzoImagen,sizeof(unsigned int),1,archivoSalida);
-
-    fseek(archivoEntrada,14,SEEK_SET);
-    fseek(archivoSalida,14,SEEK_SET);
-    fread(&metadata.tamEncabezado,sizeof(unsigned int),1,archivoEntrada);
-    fwrite(&metadata.tamEncabezado,sizeof(unsigned int),1,archivoSalida);
-
-    fseek(archivoEntrada,18,SEEK_SET);
-    fseek(archivoSalida,18,SEEK_SET);
-    fread(&metadata.ancho,sizeof(unsigned int),1,archivoEntrada);
-    fwrite(&metadata.ancho,sizeof(unsigned int),1,archivoSalida);
-
-    fseek(archivoEntrada,22,SEEK_SET);
-    fseek(archivoSalida,22,SEEK_SET);
-    fread(&metadata.alto,sizeof(unsigned int),1,archivoEntrada);
-    fwrite(&metadata.alto,sizeof(unsigned int),1,archivoSalida);
-
-    fseek(archivoEntrada,26,SEEK_SET);
-    fseek(archivoSalida,26,SEEK_SET);
-    fread(&metadata.planos,sizeof(unsigned short),1,archivoEntrada);
-    fwrite(&metadata.planos,sizeof(unsigned short),1,archivoSalida);
-
-    fseek(archivoEntrada,28,SEEK_SET);
-    fseek(archivoSalida,28,SEEK_SET);
-    fread(&metadata.tampuntos,sizeof(unsigned short),1,archivoEntrada);
-    fwrite(&metadata.tampuntos,sizeof(unsigned short),1,archivoSalida);
-
-    fseek(archivoEntrada,30,SEEK_SET);
-    fseek(archivoSalida,30,SEEK_SET);
-    fread(&metadata.compresion,sizeof(unsigned int),1,archivoEntrada);
-    fwrite(&metadata.compresion,sizeof(unsigned int),1,archivoSalida);
-
-    fseek(archivoEntrada,34,SEEK_SET);
-    fseek(archivoSalida,34,SEEK_SET);
-    fread(&metadata.tamimagen,sizeof(unsigned int),1,archivoEntrada);
-    fwrite(&metadata.tamimagen,sizeof(unsigned int),1,archivoSalida);
-
-    fseek(archivoEntrada,38,SEEK_SET);
-    fseek(archivoSalida,38,SEEK_SET);
-    fread(&metadata.resolucionhor,sizeof(unsigned int),1,archivoEntrada);
-    fwrite(&metadata.resolucionhor,sizeof(unsigned int),1,archivoSalida);
-
-    fseek(archivoEntrada,42,SEEK_SET);
-    fseek(archivoSalida,42,SEEK_SET);
-    fread(&metadata.resolucionvert,sizeof(unsigned int),1,archivoEntrada);
-    fwrite(&metadata.resolucionvert,sizeof(unsigned int),1,archivoSalida);
-
-    fseek(archivoEntrada,46,SEEK_SET);
-    fseek(archivoSalida,46,SEEK_SET);
-    fread(&metadata.tampaletacolores,sizeof(unsigned int),1,archivoEntrada);
-    fwrite(&metadata.tampaletacolores,sizeof(unsigned int),1,archivoSalida);
-
-    fseek(archivoEntrada,50,SEEK_SET);
-    fseek(archivoSalida,50,SEEK_SET);
-    fread(&metadata.contcolor,sizeof(unsigned int),1,archivoEntrada);
-    fwrite(&metadata.contcolor,sizeof(unsigned int),1,archivoSalida);
-
-    return metadata;
-}
-

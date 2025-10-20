@@ -9,3 +9,5 @@ obj/
 # Archivos temporales de Code::Blocks
 *.depend
 *.layout
+
+.vscode

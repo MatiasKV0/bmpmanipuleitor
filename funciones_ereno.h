@@ -2,18 +2,22 @@
 #define FUNCIONES_ERENO_H_INCLUDED
 #include "funciones_grupo.h"
 
-int convertirNegativo(FILE* archivoEntrada);
-int blancoNegro(FILE* archivoEntrada);
+int tonalidadAzul(HEADER *header, FILE *archivo, float porcentaje, char *nomArch);
+int tonalidadVerde(HEADER *header, FILE *archivo, float porcentaje, char *nomArch);
+int recortePorcentaje(HEADER *header, FILE *archivo, float porcentaje, char *nomArch);
+int aumentarContraste(HEADER *header, FILE *archivo, float porcentaje, char *nomArch);
+int reducirContraste(HEADER *header, FILE *archivo, float porcentaje, char *nomArch);
+int achicarImagen(HEADER *header, FILE *archivo, float porcentaje, char *nomArch);
 
-int aumentarContraste(FILE* archivoEntrada);
-int reducirContraste(FILE* archivoEntrada);
-int tonalidadAzul(FILE* archivoEntrada);
-int tonalidadVerde(FILE* archivoEntrada);
-int recortarImagen(FILE* archivoEntrada);
+int convertirNegativo(HEADER *header, FILE *archivo, char *nomArch);
+int escalaGrises(HEADER *header, FILE *archivo, char *nomArch);
 
-int rotar90gradosDerecha(FILE* archivoEntrada);
-int rotar90gradosIzquierda(FILE* archivoEntrada);
+int rotar90gradosDerecha(HEADER *header, FILE *archivo, char *nomArch);
+int rotar90gradosIzquierda(HEADER *header, FILE *archivo, char *nomArch);
 
-int comodin(FILE* archivoEntrada);
+int concatenarHorizontal(HEADER *header1, FILE *archivo1, char *nomArch1,
+                         HEADER *header2, FILE *archivo2, char *nomArch2);
+int concatenarVertical(HEADER *header1, FILE *archivo1, char *nomArch1,
+                       HEADER *header2, FILE *archivo2, char *nomArch2);
 
 #endif // FUNCIONES_ERENO_H_INCLUDED
