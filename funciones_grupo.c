@@ -173,11 +173,15 @@ int procesar_imagen(int argc, char* argv[])
 
     for (int i = 1; i < argc; i++)
     {
-        char *igual = strchr(argv[i], '=');
+        const char *opcion = argv[i];
+        if(!strcmp(opcion,nombreArchivo)) continue;
+        if(hayConcatenacion && !strcmp(opcion,nombreArchivo2)) continue;
+        if(!strcmp(argv[i],"--validar") || !strcmp(argv[i],"--verbose") || !strcmp(argv[i],"--info")) continue;
+
+        char *igual = strchr(opcion, '=');
         if (igual)
         {
             *igual = '\0';
-            const char *opcion = argv[i];
             const char *valor  = igual + 1;
             float porcentaje   = (float)atoi(valor);
 
@@ -230,56 +234,66 @@ int procesar_imagen(int argc, char* argv[])
                 status = achicarImagen(&header, archivoEntrada, porcentaje, nombreArchivo);
                 CantArch++;
             }
+            else
+            {
+                printf("[ERROR] No existe el argumento '%s'.\n",opcion);
+                status = ERROR_ARGS;
+            }
         }
-        else if (strcmp(argv[i], "--negativo") == 0)
+        else if (!strcmp(opcion, "--negativo"))
         {
             if (modoVerbose) printf("[INFO] Aplicando filtro: negativo\n");
             status = convertirNegativo(&header, archivoEntrada, nombreArchivo);
             CantArch++;
         }
-        else if (strcmp(argv[i], "--escala-de-grises") == 0)
+        else if (!strcmp(opcion, "--escala-de-grises"))
         {
             if (modoVerbose) printf("[INFO] Aplicando filtro: escala de grises\n");
             status = escalaGrises(&header, archivoEntrada, nombreArchivo);
             CantArch++;
         }
-        else if (strcmp(argv[i], "--espejar-horizontal") == 0)
+        else if (!strcmp(opcion, "--espejar-horizontal"))
         {
             if (modoVerbose) printf("[INFO] Aplicando filtro: espejar horizontalmente\n");
             status = espejarHorizontal(&header, archivoEntrada, nombreArchivo);
             CantArch++;
         }
-        else if (strcmp(argv[i], "--espejar-vertical") == 0)
+        else if (!strcmp(opcion, "--espejar-vertical"))
         {
             if (modoVerbose) printf("[INFO] Aplicando filtro: espejar verticalmente\n");
             status = espejarVertical(&header, archivoEntrada, nombreArchivo);
             CantArch++;
         }
-        else if (strcmp(argv[i], "--rotar-derecha") == 0)
+        else if (!strcmp(opcion, "--rotar-derecha"))
         {
             if (modoVerbose) printf("[INFO] Aplicando filtro: Rotar Derecha \n");
             status = rotar90gradosDerecha(&header, archivoEntrada, nombreArchivo);
             CantArch++;
         }
-        else if (strcmp(argv[i], "--rotar-izquierda") == 0)
+        else if (!strcmp(opcion, "--rotar-izquierda"))
         {
             if (modoVerbose) printf("[INFO] Aplicando filtro: Rotar Izquierda \n");
             status = rotar90gradosIzquierda(&header, archivoEntrada, nombreArchivo);
             CantArch++;
         }
-        else if (strcmp(argv[i], "--concatenar-horizontal") == 0)
+        else if (!strcmp(opcion, "--concatenar-horizontal"))
         {
             if (modoVerbose) printf("[INFO] Aplicando filtro: Concatenar Horizontal \n");
             status = concatenarHorizontal(&header, archivoEntrada, nombreArchivo,
                                           &header2, archivoEntrada2, nombreArchivo2);
             CantArch++;
         }
-        else if (strcmp(argv[i], "--concatenar-vertical") == 0)
+        else if (!strcmp(opcion, "--concatenar-vertical"))
         {
             if (modoVerbose) printf("[INFO] Aplicando filtro: Concatenar Vertical \n");
             status = concatenarVertical(&header, archivoEntrada, nombreArchivo,
                                         &header2, archivoEntrada2, nombreArchivo2);
             CantArch++;
+        }
+        else
+        {
+            printf("[ERROR] No existe el argumento '%s'.\n",opcion);
+            status = ERROR_ARGS;
         }
     }
 
@@ -288,7 +302,7 @@ int procesar_imagen(int argc, char* argv[])
         if (CantArch == 1) printf("[INFO] Proceso finalizado - %d archivo generado.\n", CantArch);
         else               printf("[INFO] Proceso finalizado - %d archivos generados.\n", CantArch);
     }
-    else
+    else if(status == EXITO)
     {
         printf("Proceso finalizado exitosamente.\n");
     }
