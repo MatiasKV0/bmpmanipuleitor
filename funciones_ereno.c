@@ -297,7 +297,7 @@ int recortePorcentaje(HEADER* header, FILE* archivo, float porcentaje, char* nom
     // biSizeImage nuevo
     unsigned int biSizeImage = (unsigned int)rowSizeNewPad * (unsigned int)nuevoAlto;
 
-    // Actualizo campos del header de salida (offsets estándar BMP v3)
+    // Actualizo campos del header de salida
     fseek(archivoRecorte, 18, SEEK_SET); fwrite(&nuevoAncho,  sizeof(unsigned int), 1, archivoRecorte);
     fseek(archivoRecorte, 22, SEEK_SET); fwrite(&nuevoAlto,   sizeof(unsigned int), 1, archivoRecorte);
     fseek(archivoRecorte, 34, SEEK_SET); fwrite(&biSizeImage, sizeof(unsigned int), 1, archivoRecorte);
@@ -306,7 +306,7 @@ int recortePorcentaje(HEADER* header, FILE* archivo, float porcentaje, char* nom
     fseek(archivo, header->comienzoImagen, SEEK_SET);
     fseek(archivoRecorte, header->comienzoImagen, SEEK_SET);
 
-    // Escribir filas recortadas desde el “origen” (como en tu enfoque)
+    // Escribir filas recortadas desde el “origen”
     unsigned char padZeros[3] = {0,0,0};
     t_pixel pixel;
 
@@ -357,6 +357,8 @@ int aumentarContraste(HEADER* header, FILE* archivo, float porcentaje, char* nom
 
     t_pixel pixel;
 
+    float factor = 1.0f + (porcentaje / 100.0f);
+
     for (unsigned int i = 0; i < header->alto; i++)
     {
         for (unsigned int j = 0; j < header->ancho; j++)
@@ -367,7 +369,7 @@ int aumentarContraste(HEADER* header, FILE* archivo, float porcentaje, char* nom
             for (int c = 0; c < 3; c++)
             {
                 float v  = (float)pixel.pixel[c];
-                float nv = (v - 128.0f) * porcentaje + 128.0f;
+                float nv = (v - 128.0f) * factor + 128.0f;
 
                 if (nv < 0.0f)   nv = 0.0f;
                 if (nv > 255.0f) nv = 255.0f;
@@ -385,10 +387,12 @@ int aumentarContraste(HEADER* header, FILE* archivo, float porcentaje, char* nom
 
 int reducirContraste(HEADER* header, FILE* archivo, float porcentaje, char* nomArch)
 {
-    // factor = 1 - X/100  (clamp >= 0).  X=0% -> igual; X=100% -> todo se aplana a 128.
+
     if (porcentaje < 0.0f) porcentaje = 0.0f;
     if (porcentaje > 100.0f) porcentaje = 100.0f;
+    const float MIN_FACTOR = 0.05f;
     float factor = 1.0f - (porcentaje / 100.0f);
+    if (factor < MIN_FACTOR) factor = MIN_FACTOR;
 
     char nomArchSalida[128] = "virus_reducir-contraste-";
     char numero[20];
@@ -560,7 +564,7 @@ int convertirNegativo(HEADER* header, FILE* archivo, char* nomArch)
             fwrite(&pixel, 1, 3, archivoNegativo);
         }
 
-        // Saltar padding de entrada y escribir padding de salida (mismo ancho ⇒ mismo padding)
+        // Saltar padding de entrada y escribir padding de salida (mismo ancho mismo padding)
         if (padding) fseek(archivo, padding, SEEK_CUR);
         if (padding) fwrite(padZeros, 1, padding, archivoNegativo);
     }
@@ -753,11 +757,11 @@ int rotar90gradosDerecha(HEADER* header, FILE* archivo, char* nomArch)
     int rowNewPad   = rowNewNoPad + padNew;
 
     // Recalcular tamaños en header destino
-    unsigned int newComImagen = header->comienzoImagen;    // típicamente 54
+    unsigned int newComImagen = header->comienzoImagen;    // 54
     unsigned int newTamImagen = (unsigned int)(rowNewPad * (unsigned int)AltoNuevo);
     unsigned int newTamArchivo = newComImagen + newTamImagen;
 
-    // Actualizar header ya escrito en archivoOut (BMP v3)
+    // Actualizar header ya escrito en archivoOut
     fseek(archivoOut, 18, SEEK_SET); fwrite(&AnchoNuevo, sizeof(unsigned int), 1, archivoOut); // ancho
     fseek(archivoOut, 22, SEEK_SET); fwrite(&AltoNuevo, sizeof(unsigned int), 1, archivoOut); // alto
     fseek(archivoOut, 34, SEEK_SET); fwrite(&newTamImagen, sizeof(unsigned int), 1, archivoOut); // newTamImagen
@@ -859,11 +863,11 @@ int rotar90gradosIzquierda(HEADER* header, FILE* archivo, char* nomArch)
     int rowNewPad   = rowNewNoPad + padNew;
 
     // Recalcular tamaños en header destino
-    unsigned int newComImagen  = header->comienzoImagen; // típicamente 54
+    unsigned int newComImagen  = header->comienzoImagen; //54
     unsigned int newTamImagen  = (unsigned int)(rowNewPad * (unsigned int)AltoNuevo);
     unsigned int newTamArchivo = newComImagen + newTamImagen;
 
-    // Actualizar header ya escrito en archivoOut (BMP v3)
+    // Actualizar header ya escrito en archivoOut
     fseek(archivoOut, 18, SEEK_SET); fwrite(&AnchoNuevo,   sizeof(unsigned int), 1, archivoOut); // ancho
     fseek(archivoOut, 22, SEEK_SET); fwrite(&AltoNuevo,    sizeof(unsigned int), 1, archivoOut); // alto
     fseek(archivoOut, 34, SEEK_SET); fwrite(&newTamImagen, sizeof(unsigned int), 1, archivoOut); // biSizeImage
@@ -935,6 +939,11 @@ int concatenarHorizontal(HEADER* header1, FILE* archivo1, char* nomArch1,HEADER*
     const int BPP = 3; // 24 bpp (B,G,R)
     const unsigned char ZERO = 0;
 
+    // >>> COLOR DE RELLENO (ni negro ni blanco) <<<
+    const unsigned char FILL_B = 128; // Azul marino
+    const unsigned char FILL_G = 0;
+    const unsigned char FILL_R = 0;
+
     // Validaciones mínimas
     if (!header1 || !archivo1 || !header2 || !archivo2 || !nomArch1 || !nomArch2)
         return ERROR_ARCH;
@@ -978,10 +987,14 @@ int concatenarHorizontal(HEADER* header1, FILE* archivo1, char* nomArch1,HEADER*
     int padNew   = (4 - (rowNoPad % 4)) % 4;
     int rowPad   = rowNoPad + padNew;
 
+    // Offsets: usar el de cada imagen para leer y el de la 1ra para escribir
+    unsigned int offsDatosOut = header1->comienzoImagen;  // salida
+    unsigned int offsDatos1   = header1->comienzoImagen;  // leer img1
+    unsigned int offsDatos2   = header2->comienzoImagen;  // leer img2
+
     // Recalcular tamaños en header destino
-    unsigned int offsDatos   = header1->comienzoImagen;              // típico 54
     unsigned int biSizeImage = (unsigned int)H * (unsigned int)rowPad;
-    unsigned int bfSize      = offsDatos + biSizeImage;
+    unsigned int bfSize      = offsDatosOut + biSizeImage;
 
     // Actualizar header YA escrito en archivoOut (BITMAPINFOHEADER / BITMAPFILEHEADER)
     fseek(archivoOut, 18, SEEK_SET); fwrite(&W,           sizeof(unsigned int), 1, archivoOut); // ancho
@@ -990,9 +1003,9 @@ int concatenarHorizontal(HEADER* header1, FILE* archivo1, char* nomArch1,HEADER*
     fseek(archivoOut,  2, SEEK_SET); fwrite(&bfSize,      sizeof(unsigned int), 1, archivoOut); // bfSize
 
     // Posicionar punteros al comienzo de datos de cada archivo
-    fseek(archivo1, offsDatos, SEEK_SET);
-    fseek(archivo2, offsDatos, SEEK_SET);
-    fseek(archivoOut, offsDatos, SEEK_SET);
+    fseek(archivo1,  offsDatos1,   SEEK_SET);
+    fseek(archivo2,  offsDatos2,   SEEK_SET);
+    fseek(archivoOut, offsDatosOut, SEEK_SET);
 
     // Buffers de trabajo por fila
     unsigned char* row1 = (unsigned char*)malloc((size_t)rowNoPad1);
@@ -1009,37 +1022,43 @@ int concatenarHorizontal(HEADER* header1, FILE* archivo1, char* nomArch1,HEADER*
         // yTop es la fila lógica desde arriba
         unsigned int yTop = H - 1 - yOut;
 
-        // Para cada imagen, si esa fila existe (alineación arriba):
-        // yTop < H1  => leer fila H1-1 - yTop en archivo1
-        // yTop < H2  => leer fila H2-1 - yTop en archivo2
-        // Si no existe, la consideramos toda cero (negro).
-
         // --- Origen 1 ---
         if (yTop < H1) {
-            long off1 = (long)offsDatos + (long)(H1 - 1 - yTop) * (long)rowPad1;
+            long off1 = (long)offsDatos1 + (long)(H1 - 1 - yTop) * (long)rowPad1;
             fseek(archivo1, off1, SEEK_SET);
             if (fread(row1, 1, (size_t)rowNoPad1, archivo1) != (size_t)rowNoPad1) {
                 free(row1); free(row2); free(dst); fclose(archivoOut); return ERROR_ARCH;
             }
         } else {
-            memset(row1, 0, (size_t)rowNoPad1);
+            // Relleno con color cuando falta la fila en img1
+            for (unsigned int x = 0; x < W1; x++) {
+                size_t idx = (size_t)x * 3;
+                row1[idx + 0] = FILL_B;
+                row1[idx + 1] = FILL_G;
+                row1[idx + 2] = FILL_R;
+            }
         }
 
         // --- Origen 2 ---
         if (yTop < H2) {
-            long off2 = (long)offsDatos + (long)(H2 - 1 - yTop) * (long)rowPad2;
+            long off2 = (long)offsDatos2 + (long)(H2 - 1 - yTop) * (long)rowPad2;
             fseek(archivo2, off2, SEEK_SET);
             if (fread(row2, 1, (size_t)rowNoPad2, archivo2) != (size_t)rowNoPad2) {
                 free(row1); free(row2); free(dst); fclose(archivoOut); return ERROR_ARCH;
             }
         } else {
-            memset(row2, 0, (size_t)rowNoPad2);
+            // Relleno con color cuando falta la fila en img2
+            for (unsigned int x = 0; x < W2; x++) {
+                size_t idx = (size_t)x * 3;
+                row2[idx + 0] = FILL_B;
+                row2[idx + 1] = FILL_G;
+                row2[idx + 2] = FILL_R;
+            }
         }
 
         // --- Construir fila destino: row1 || row2 ---
-        // dst = [BGR... W1 píxeles][BGR... W2 píxeles]
-        memcpy(dst,                row1, (size_t)rowNoPad1);
-        memcpy(dst + rowNoPad1,    row2, (size_t)rowNoPad2);
+        memcpy(dst,             row1, (size_t)rowNoPad1);
+        memcpy(dst + rowNoPad1, row2, (size_t)rowNoPad2);
 
         // --- Escribir fila destino ---
         if (fwrite(dst, 1, (size_t)rowNoPad, archivoOut) != (size_t)rowNoPad) {
@@ -1057,6 +1076,10 @@ int concatenarHorizontal(HEADER* header1, FILE* archivo1, char* nomArch1,HEADER*
 int concatenarVertical(HEADER* header1, FILE* archivo1, char* nomArch1,HEADER* header2, FILE* archivo2, char* nomArch2)
 {
     const int BPP = 3; // 24 bpp (B,G,R)
+
+    const unsigned char FILL_B = 128; // Azul marino (BGR)
+    const unsigned char FILL_G = 70;
+    const unsigned char FILL_R = 0;
 
     // Nombre de salida
     char nomArchSalida[256] = "virus_concatenar-vertical-";
@@ -1094,21 +1117,25 @@ int concatenarVertical(HEADER* header1, FILE* archivo1, char* nomArch1,HEADER* h
     int padNew   = (4 - (rowNoPad % 4)) % 4;
     int rowPad   = rowNoPad + padNew;
 
-    // Recalcular tamaños en header destino
-    unsigned int offsDatos   = header1->comienzoImagen;                 // típicamente 54
-    unsigned int biSizeImage = (unsigned int)H * (unsigned int)rowPad;  // datos con padding por fila
-    unsigned int bfSize      = offsDatos + biSizeImage;
+    // ---- USAR EL OFFSET CORRECTO PARA CADA ARCHIVO ----
+    unsigned int offsDatosOut = header1->comienzoImagen; // salida
+    unsigned int offsDatos1   = header1->comienzoImagen; // lectura img1
+    unsigned int offsDatos2   = header2->comienzoImagen; // lectura img2
 
-    // Actualizar header ya escrito en archivoOut (BMP v3)
+    // Recalcular tamaños en header destino
+    unsigned int biSizeImage = (unsigned int)H * (unsigned int)rowPad;  // datos con padding por fila
+    unsigned int bfSize      = offsDatosOut + biSizeImage;
+
+    // Actualizar header ya escrito en archivoOut
     fseek(archivoOut, 18, SEEK_SET); fwrite(&W,           sizeof(unsigned int), 1, archivoOut); // ancho
     fseek(archivoOut, 22, SEEK_SET); fwrite(&H,           sizeof(unsigned int), 1, archivoOut); // alto
     fseek(archivoOut, 34, SEEK_SET); fwrite(&biSizeImage, sizeof(unsigned int), 1, archivoOut); // biSizeImage
     fseek(archivoOut,  2, SEEK_SET); fwrite(&bfSize,      sizeof(unsigned int), 1, archivoOut); // bfSize
 
     // Posicionar datos
-    fseek(archivo1, offsDatos, SEEK_SET);
-    fseek(archivo2, offsDatos, SEEK_SET);
-    fseek(archivoOut, offsDatos, SEEK_SET);
+    fseek(archivo1,  offsDatos1,   SEEK_SET);
+    fseek(archivo2,  offsDatos2,   SEEK_SET);
+    fseek(archivoOut, offsDatosOut, SEEK_SET);
 
     // Buffers por fila
     unsigned char* row1 = (unsigned char*)malloc((size_t)rowNoPad1);
@@ -1125,23 +1152,28 @@ int concatenarVertical(HEADER* header1, FILE* archivo1, char* nomArch1,HEADER* h
     for (unsigned int yOut = 0; yOut < H; yOut++) {
         unsigned int yTop = H - 1 - yOut;  // fila lógica desde arriba
 
-        // Inicializar fila destino a negro
-        memset(dst, 0, (size_t)rowNoPad);
+        // Inicializar fila destino con COLOR de relleno (no negro/blanco)
+        for (unsigned int x = 0; x < W; x++) {
+            size_t idx = (size_t)x * BPP;
+            dst[idx + 0] = FILL_B; // B
+            dst[idx + 1] = FILL_G; // G
+            dst[idx + 2] = FILL_R; // R
+        }
 
         if (yTop < H1) {
             // Fila de la imagen 1 (arriba)
-            long off1 = (long)offsDatos + (long)(H1 - 1 - yTop) * (long)rowPad1; // bottom-up en archivo
+            long off1 = (long)offsDatos1 + (long)(H1 - 1 - yTop) * (long)rowPad1; // bottom-up en archivo
             fseek(archivo1, off1, SEEK_SET);
             if (fread(row1, 1, (size_t)rowNoPad1, archivo1) != (size_t)rowNoPad1) {
                 free(row1); free(row2); free(dst); fclose(archivoOut); return ERROR_ARCH;
             }
-            // Alineación por ANCHO a la izquierda (x0=0). Si querés centrar: x0 = (W - W1)/2.
+            // Alineación por ANCHO a la izquierda (x0=0)
             unsigned int x0 = 0;
             memcpy(dst + (size_t)x0 * BPP, row1, (size_t)rowNoPad1);
         } else {
             // Fila de la imagen 2 (abajo)
             unsigned int y2Top = yTop - H1;
-            long off2 = (long)offsDatos + (long)(H2 - 1 - y2Top) * (long)rowPad2;
+            long off2 = (long)offsDatos2 + (long)(H2 - 1 - y2Top) * (long)rowPad2;
             fseek(archivo2, off2, SEEK_SET);
             if (fread(row2, 1, (size_t)rowNoPad2, archivo2) != (size_t)rowNoPad2) {
                 free(row1); free(row2); free(dst); fclose(archivoOut); return ERROR_ARCH;
