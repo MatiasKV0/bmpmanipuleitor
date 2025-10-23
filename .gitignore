@@ -1,6 +1,7 @@
 # Archivos compilados
 *.o
 *.exe
+.bmp
 
 # Carpetas de build
 bin/
