@@ -64,7 +64,7 @@ bool cargarHeader(FILE* archivo, HEADER* header)
 
 void imprimirHelp()
 {
-    printf("BMPMANIPULEITOR - Manipulador de imagenes BMP 24 bits\n");
+    printf("BMPMANIPULEITOR - Manipulador de imagenes BMP 24 bits\n\n");
     printf("GRUPO: VIRUS\n");
     printf("Integrantes:\n");
     printf("1. 44513506 - ERENO, Tomas\n");
@@ -78,18 +78,43 @@ void imprimirHelp()
     printf("  bmpmanipuleitor.exe --concatenar-horizontal img1.bmp img2.bmp\n");
     printf("  bmpmanipuleitor.exe img1.bmp --concatenar-vertical img2.bmp\n");
     printf("  bmpmanipuleitor.exe img1.bmp img2.bmp --concatenar-horizontal\n\n");
+
     printf("UTILIDADES:\n");
     printf("  --help       Mostrar esta ayuda\n");
     printf("  --info       Mostrar informacion tecnica del BMP\n");
-    printf("  --validar    Validar archivo sin aplicar filtros\n");
+    printf("  --validar    Validar archivo\n");
     printf("  --verbose    Activar modo informativo detallado\n\n");
-    printf("FILTROS:\n");
-    printf("  --negativo                 Aplica filtro negativo\n");
-    printf("  --escala-de-grises         Convierte a blanco y negro\n");
-    printf("  --tonalidad-roja=<0-100>   Ajusta tonalidad roja\n");
-    printf("  --aumentar-contraste=<n>   Incrementa contraste en %%\n");
-    printf("  --concatenar-horizontal    Concatena img1 + img2 (lado a lado)\n");
-    printf("  --concatenar-vertical      Concatena img1 encima de img2 (una arriba de otra");
+
+    printf("FILTROS BASICOS:\n");
+    printf("  --negativo                Invertir colores\n");
+    printf("  --escala-de-grises        Convertir a escala de grises promediando RGB\n");
+    printf("  --espejar-horizontal      Voltear imagen horizontalmente\n");
+    printf("  --espejar-vertical        Voltear imagen verticalmente\n\n");
+
+    printf("FILTROS CON PARAMETROS (0-100%%):\n");
+    printf("  --aumentar-contraste=X    Aumenta el contraste en un X%%\n");
+    printf("  --reducir-contraste=X     Reduce el contraste en un X%%\n");
+    printf("  --tonalidad-azul=X        Aumenta en un X%% la intensidad del color azul\n");
+    printf("  --tonalidad-verde=X       Aumenta en un X%% la intensidad del color verde\n");
+    printf("  --tonalidad-roja=X        Aumenta en un X%% la intensidad del color rojo\n");
+    printf("  --recortar=X              Mantiene solo X%% de la imagen original\n");
+    printf("  --achicar=X               Reescalando la imagen al X%%\n\n");
+
+    printf("ROTACIONES:\n");
+    printf("  --rotar-derecha           Rota la imagen 90 grados en sentido horario\n");
+    printf("  --rotar-izquierda         Rota la imagen 90 grados en sentido antihorario\n\n");
+
+    printf("CONCATENACIONES:\n");
+    printf("  --concatenar-horizontal   Concatena dos imagenes lado a lado\n");
+    printf("  --concatenar-vertical     Concatena dos imagenes una sobre otra\n");
+    printf("     * Si las imagenes tienen distinto alto/ancho, la menor se rellena\n\n");
+
+    printf("COMODIN:\n");
+    printf("  --comodin=X               Imprime columnas de colores\n\n");
+
+    printf("NOTAS:\n");
+    printf("  * Solo los filtros de concatenacion requieren dos imagenes.\n");
+    printf("  * Los demas filtros operan sobre la primer imagen.\n\n");
 }
 
 void imprimirInfo(HEADER* header, char* nomArch)

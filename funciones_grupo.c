@@ -49,6 +49,13 @@ int procesar_imagen(int argc, char* argv[])
         }
     }
 
+    // --Help
+    if (mostrarAyuda)
+    {
+        imprimirHelp();
+        return EXITO;
+    }
+
     if (!nombreArchivo)
     {
         printf("[ERROR] No se proporciono el nombre del archivo.\n");
@@ -75,13 +82,6 @@ int procesar_imagen(int argc, char* argv[])
     //--------------------------
     // UTILIDADES
     //--------------------------
-
-    // --Help
-    if (mostrarAyuda)
-    {
-        imprimirHelp();
-        return EXITO;
-    }
 
     // --Verbose
     if (modoVerbose)
