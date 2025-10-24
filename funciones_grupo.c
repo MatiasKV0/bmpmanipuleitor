@@ -29,8 +29,6 @@ int procesar_imagen(int argc, char* argv[])
         return ERROR_ARGS;
     }
 
-    eliminarDuplicados(&argc, argv);
-
     for (int i = 1; i < argc; i++)
     {
         if (strcmp(argv[i], "--help") == 0)
@@ -179,6 +177,7 @@ int procesar_imagen(int argc, char* argv[])
     //-------------------
     // FILTROS
     //-------------------
+    eliminarDuplicados(&argc, argv);
     int CantArch = 0;
 
     for (int i = 1; i < argc; i++)
@@ -248,7 +247,7 @@ int procesar_imagen(int argc, char* argv[])
             {
                 if (porcentaje < 2 || porcentaje > 10)
                 {
-                    printf("[ERROR] Parametro invalido en %s.\n", opcion);
+                    printf("[ERROR] Parametro invalido en %s. Ingrese valores entre [2-10]\n", opcion);
                     status = ERROR_ARGS;
                     continue;
                 }
@@ -321,7 +320,7 @@ int procesar_imagen(int argc, char* argv[])
 
     if (!mostrarInfo && !soloValidar && CantArch == 0)
     {
-        printf("[ERROR] No se especifico ninguna accion o filtro para aplicar a '%s'.\n", nombreArchivo);
+        printf("[ERROR] No se especifico ninguna accion o filtro valido para aplicar a '%s'.\n", nombreArchivo);
         printf("Use '--help' para ver las opciones disponibles.\n");
         fclose(archivoEntrada);
         if (archivoEntrada2) fclose(archivoEntrada2);

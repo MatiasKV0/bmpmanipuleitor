@@ -1,12 +1,11 @@
 #include "funciones_basso.h"
-#include "funciones_grupo.h"
 
 int tonalidadColumnasSecuencial(HEADER* header, FILE* archivo, float porcentaje, char* nomArch)
 {
-    char nomArchSalida[100] = "virus_tonalidad-columnas-";
+    char nomArchSalida[128] = "VIRUS_tonalidad-columnas-";
     char numero[20];
 
-    sprintf(numero, "%.2f_", porcentaje);
+    sprintf(numero, "%.0f_", porcentaje);
     strcat(nomArchSalida, numero);
     strcat(nomArchSalida, nomArch);
 

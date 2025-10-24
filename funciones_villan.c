@@ -1,5 +1,4 @@
 #include "funciones_villan.h"
-#include "funciones_basso.h"
 
 bool leerHeader(FILE* archivo, HEADER* header)
 {
@@ -111,7 +110,8 @@ void imprimirHelp()
     printf("     * Si las imagenes tienen distinto alto/ancho, la menor se rellena\n\n");
 
     printf("COMODIN:\n");
-    printf("  --comodin=X               Imprime columnas de colores\n\n");
+    printf("  --comodin=X               Aplica columnas verticales de colores (R, G, B)\n");
+    printf("                            X = cantidad de columnas (minimo 2, maximo 10)\n\n");
 
     printf("NOTAS:\n");
     printf("  * Solo los filtros de concatenacion requieren dos imagenes.\n");

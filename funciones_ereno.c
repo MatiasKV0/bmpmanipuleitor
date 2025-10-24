@@ -102,7 +102,7 @@ int tonalidadVerde(HEADER* header, FILE* archivo, float porcentaje, char* nomArc
 int recortePorcentaje(HEADER* header, FILE* archivo, float porcentaje, char* nomArch)
 {
 
-    char nomArchSalida[128] = "VIRUS_recorte-";
+    char nomArchSalida[128] = "VIRUS_recortar-";
     char numero[20];
     sprintf(numero, "%.0f_", porcentaje);
     strcat(nomArchSalida, numero);
@@ -142,8 +142,10 @@ int recortePorcentaje(HEADER* header, FILE* archivo, float porcentaje, char* nom
 
     // biSizeImage nuevo
     unsigned int biSizeImage = (unsigned int)rowSizeNewPad * (unsigned int)nuevoAlto;
+    unsigned int tamArchivo = biSizeImage + header->comienzoImagen;
 
     // Actualizo campos del header de salida
+    fseek(archivoRecorte, 2, SEEK_SET);  fwrite(&tamArchivo,  sizeof(unsigned int), 1, archivoRecorte);
     fseek(archivoRecorte, 18, SEEK_SET); fwrite(&nuevoAncho,  sizeof(unsigned int), 1, archivoRecorte);
     fseek(archivoRecorte, 22, SEEK_SET); fwrite(&nuevoAlto,   sizeof(unsigned int), 1, archivoRecorte);
     fseek(archivoRecorte, 34, SEEK_SET); fwrite(&biSizeImage, sizeof(unsigned int), 1, archivoRecorte);
@@ -462,7 +464,7 @@ int escalaGrises(HEADER* header, FILE* archivo, char* nomArch)
     const int BYTES_POR_PIXEL = 3; // 24 bpp (B,G,R)
 
     // Nombre de salida: VIRUS_escala-grises_<nomArch>
-    char nomArchSalida[128] = "VIRUS_escala-grises_";
+    char nomArchSalida[128] = "VIRUS_escala-de-grises_";
     strcat(nomArchSalida, nomArch);
 
     FILE* archivoGris = fopen(nomArchSalida, "wb");
