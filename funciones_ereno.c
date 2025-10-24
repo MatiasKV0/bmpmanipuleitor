@@ -43,7 +43,9 @@ int tonalidadAzul(HEADER* header, FILE* archivo, float porcentaje, char* nomArch
 
             fwrite(&pixel, 3, 1, archivoAzul);
         }
+        manejarPadding(header, archivo, archivoAzul);
     }
+
 
     fclose(archivoAzul);
     return EXITO;
@@ -90,6 +92,7 @@ int tonalidadVerde(HEADER* header, FILE* archivo, float porcentaje, char* nomArc
 
             fwrite(&pixel, 3, 1, archivoVerde);
         }
+        manejarPadding(header, archivo, archivoVerde);
     }
 
     fclose(archivoVerde);
@@ -224,6 +227,7 @@ int aumentarContraste(HEADER* header, FILE* archivo, float porcentaje, char* nom
 
             fwrite(&pixel, 3, 1, archivoContraste);
         }
+        manejarPadding(header, archivo, archivoContraste);
     }
 
     fclose(archivoContraste);
@@ -327,12 +331,20 @@ int achicarImagen(HEADER* header, FILE* archivo, float porcentaje, char* nomArch
     if (nuevoAncho == 0) nuevoAncho = 1;
     if (nuevoAlto  == 0) nuevoAlto  = 1;
 
+    int rowOrig = header->ancho * BPP;
+    int padOrig = (4 - (rowOrig % 4)) % 4;
+    int rowOrigTotal = rowOrig + padOrig;
+
+    int rowNew = nuevoAncho * BPP;
+    int padNew = (4 - (rowNew % 4)) % 4;
+    int rowNewTotal = rowNew + padNew;
+
     // *** SIN PADDING ***
-    int rowOrig = (int)header->ancho * BPP;     // sin relleno
-    int rowNew  = (int)nuevoAncho   * BPP;      // sin relleno
+    //int rowOrig = (int)header->ancho * BPP;     // sin relleno
+    //int rowNew  = (int)nuevoAncho   * BPP;      // sin relleno
 
     unsigned int bfOffBits  = header->comienzoImagen;  // típicamente 54
-    unsigned int biSizeImage = (unsigned int)rowNew * (unsigned int)nuevoAlto; // sin relleno
+    unsigned int biSizeImage = (unsigned int)rowNewTotal * (unsigned int)nuevoAlto; // sin relleno
     unsigned int bfSize      = bfOffBits + biSizeImage;
 
     // Actualizar cabecera en archivo destino (offsets estándar BMP v3)
@@ -351,6 +363,7 @@ int achicarImagen(HEADER* header, FILE* archivo, float porcentaje, char* nomArch
 
     // Buffer para una fila fuente (sin relleno)
     unsigned char* srcRow = (unsigned char*)malloc((size_t)rowOrig);
+        unsigned char padZeros[3] = {0, 0, 0};
     if (!srcRow)
     {
         fclose(archivoOut);
@@ -364,7 +377,7 @@ int achicarImagen(HEADER* header, FILE* archivo, float porcentaje, char* nomArch
         if (ySrc >= header->alto) ySrc = header->alto - 1;
 
         // Seek absoluto a la fila fuente y leerla completa (sin relleno)
-        long offFila = (long)bfOffBits + (long)ySrc * (long)rowOrig;
+        long offFila = (long)bfOffBits + (long)ySrc * (long)rowOrigTotal;
         fseek(archivo, offFila, SEEK_SET);
         fread(srcRow, 1, (size_t)rowOrig, archivo);
 
@@ -377,6 +390,8 @@ int achicarImagen(HEADER* header, FILE* archivo, float porcentaje, char* nomArch
             size_t idx = (size_t)xSrc * BPP;
             fwrite(&srcRow[idx], 1, BPP, archivoOut);
         }
+        if (padNew > 0)
+            fwrite(padZeros, 1, padNew, archivoOut);
     }
 
     free(srcRow);

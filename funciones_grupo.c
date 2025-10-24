@@ -220,7 +220,7 @@ int procesar_imagen(int argc, char* argv[])
                 status = tonalidadVerde(&header, archivoEntrada, porcentaje, nombreArchivo);
                 CantArch++;
             }
-            else if (strcmp(opcion, "--recortar-imagen") == 0)
+            else if (strcmp(opcion, "--recortar") == 0)
             {
                 if (modoVerbose) printf("[INFO] Aplicando filtro: Recortar Imagen (%d%%)\n", (int)porcentaje);
                 status = recortePorcentaje(&header, archivoEntrada, porcentaje, nombreArchivo);
@@ -242,6 +242,18 @@ int procesar_imagen(int argc, char* argv[])
             {
                 if (modoVerbose) printf("[INFO] Aplicando filtro: Achicar imagen\n");
                 status = achicarImagen(&header, archivoEntrada, porcentaje, nombreArchivo);
+                CantArch++;
+            }
+            else if(strcmp(opcion, "--comodin") == 0)
+            {
+                if (porcentaje < 2 || porcentaje > 10)
+                {
+                    printf("[ERROR] Parametro invalido en %s.\n", opcion);
+                    status = ERROR_ARGS;
+                    continue;
+                }
+                if (modoVerbose) printf("[INFO] Aplicando filtro: Encolumnar colores\n");
+                status = tonalidadColumnasSecuencial(&header, archivoEntrada, porcentaje, nombreArchivo);
                 CantArch++;
             }
             else

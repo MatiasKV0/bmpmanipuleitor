@@ -1,4 +1,5 @@
 #include "funciones_villan.h"
+#include "funciones_basso.h"
 
 bool leerHeader(FILE* archivo, HEADER* header)
 {
@@ -223,6 +224,7 @@ int tonalidadRojo(HEADER* header, FILE* archivo, float porcentaje, char* nomArch
 
             fwrite(&pixel, 3, 1, archivoRojo);
         }
+        manejarPadding(header, archivo, archivoRojo);
     }
 
     fclose(archivoRojo);
