@@ -29,6 +29,8 @@ int procesar_imagen(int argc, char* argv[])
         return ERROR_ARGS;
     }
 
+    eliminarDuplicados(&argc, argv);
+
     for (int i = 1; i < argc; i++)
     {
         if (strcmp(argv[i], "--help") == 0)

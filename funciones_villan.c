@@ -340,3 +340,25 @@ char* archivoSinExtension(const char* nom) {
     nuevo[len] = '\0';
     return nuevo;
 }
+
+void eliminarDuplicados(int *argc, char *argv[])
+{
+    for (int i = 1; i < *argc; i++)
+    {
+        for (int j = i + 1; j < *argc; )
+        {
+            if (strcmp(argv[i], argv[j]) == 0)
+            {
+                for (int k = j; k < *argc - 1; k++)
+                    argv[k] = argv[k + 1];
+
+                (*argc)--;
+            }
+            else
+            {
+                j++;
+            }
+        }
+    }
+}
+
