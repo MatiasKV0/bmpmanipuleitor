@@ -5,7 +5,7 @@
 int tonalidadAzul(HEADER* header, FILE* archivo, float porcentaje, char* nomArch)
 {
 
-    char nomArchSalida[100] = "virus_tonalidad-azul-";
+    char nomArchSalida[128] = "VIRUS_tonalidad-azul-";
     char numero[20];
 
     sprintf(numero, "%.0f_", porcentaje);
@@ -52,7 +52,7 @@ int tonalidadAzul(HEADER* header, FILE* archivo, float porcentaje, char* nomArch
 int tonalidadVerde(HEADER* header, FILE* archivo, float porcentaje, char* nomArch)
 {
 
-    char nomArchSalida[100] = "virus_tonalidad-verde-";
+    char nomArchSalida[128] = "VIRUS_tonalidad-verde-";
     char numero[20];
 
     sprintf(numero, "%.0f_", porcentaje);
@@ -99,7 +99,7 @@ int tonalidadVerde(HEADER* header, FILE* archivo, float porcentaje, char* nomArc
 int recortePorcentaje(HEADER* header, FILE* archivo, float porcentaje, char* nomArch)
 {
 
-    char nomArchSalida[128] = "virus_recorte-";
+    char nomArchSalida[128] = "VIRUS_recorte-";
     char numero[20];
     sprintf(numero, "%.0f_", porcentaje);
     strcat(nomArchSalida, numero);
@@ -177,7 +177,7 @@ int recortePorcentaje(HEADER* header, FILE* archivo, float porcentaje, char* nom
 int aumentarContraste(HEADER* header, FILE* archivo, float porcentaje, char* nomArch)
 {
 
-    char nomArchSalida[128] = "virus_aumentar-contraste-";
+    char nomArchSalida[128] = "VIRUS_aumentar-contraste-";
     char numero[20];
 
     sprintf(numero, "%.0f_", porcentaje);
@@ -239,7 +239,7 @@ int reducirContraste(HEADER* header, FILE* archivo, float porcentaje, char* nomA
     float factor = 1.0f - (porcentaje / 100.0f);
     if (factor < MIN_FACTOR) factor = MIN_FACTOR;
 
-    char nomArchSalida[128] = "virus_reducir-contraste-";
+    char nomArchSalida[128] = "VIRUS_reducir-contraste-";
     char numero[20];
     sprintf(numero, "%.0f_", porcentaje);
     strcat(nomArchSalida, numero);
@@ -304,7 +304,7 @@ int achicarImagen(HEADER* header, FILE* archivo, float porcentaje, char* nomArch
     const int BPP = 3; // 24 bpp (B,G,R)
 
     // Nombre de salida
-    char nomArchSalida[128] = "virus_achicar-";
+    char nomArchSalida[128] = "VIRUS_achicar-";
     char numero[20];
     sprintf(numero, "%.0f_", porcentaje);
     strcat(nomArchSalida, numero);
@@ -393,8 +393,8 @@ int convertirNegativo(HEADER* header, FILE* archivo, char* nomArch)
 {
     const int BYTES_POR_PIXEL = 3; // 24 bpp (B,G,R)
 
-    // Nombre de salida: virus_negativo-<nomArch>
-    char nomArchSalida[128] = "virus_negativo-";
+    // Nombre de salida: VIRUS_negativo_<nomArch>
+    char nomArchSalida[128] = "VIRUS_negativo_";
     strcat(nomArchSalida, nomArch);
 
     FILE* archivoNegativo = fopen(nomArchSalida, "wb");
@@ -449,8 +449,8 @@ int escalaGrises(HEADER* header, FILE* archivo, char* nomArch)
 {
     const int BYTES_POR_PIXEL = 3; // 24 bpp (B,G,R)
 
-    // Nombre de salida: virus_escala-grises-<nomArch>
-    char nomArchSalida[128] = "virus_escala-grises-";
+    // Nombre de salida: VIRUS_escala-grises_<nomArch>
+    char nomArchSalida[128] = "VIRUS_escala-grises_";
     strcat(nomArchSalida, nomArch);
 
     FILE* archivoGris = fopen(nomArchSalida, "wb");
@@ -511,7 +511,7 @@ int rotar90gradosDerecha(HEADER* header, FILE* archivo, char* nomArch)
     const int BPP = 3; // 24 bpp (B,G,R)
 
     // Nombre de salida
-    char nomArchSalida[128] = "virus_rotar-derecha-";
+    char nomArchSalida[128] = "VIRUS_rotar-derecha_";
     strcat(nomArchSalida, nomArch);
 
     FILE* archivoOut = fopen(nomArchSalida, "wb");
@@ -643,7 +643,7 @@ int rotar90gradosIzquierda(HEADER* header, FILE* archivo, char* nomArch)
     const int BPP = 3; // 24 bpp (B,G,R)
 
     // Nombre de salida
-    char nomArchSalida[128] = "virus_rotar-izquierda-";
+    char nomArchSalida[128] = "VIRUS_rotar-izquierda_";
     strcat(nomArchSalida, nomArch);
 
     FILE* archivoOut = fopen(nomArchSalida, "wb");
@@ -778,18 +778,12 @@ int concatenarHorizontal(HEADER* header1, FILE* archivo1, char* nomArch1,HEADER*
     const unsigned char FILL_G = 0;
     const unsigned char FILL_R = 0;
 
-    // Validaciones mínimas
-    if (!header1 || !archivo1 || !header2 || !archivo2 || !nomArch1 || !nomArch2)
-        return ERROR_ARCH;
-    if (header1->tampuntos != 24 || header2->tampuntos != 24) {
-        printf("Solo se soportan BMP de 24 bpp.\n");
-        return ERROR_ARCH;
-    }
+    char *nomArchSinExt = archivoSinExtension(nomArch1);
 
     // Nombre de salida
-    char nomArchSalida[512] = "virus_concatenar-horizontal-";
-    strncat(nomArchSalida, nomArch1, sizeof(nomArchSalida)-1 - strlen(nomArchSalida));
-    strncat(nomArchSalida, "-",       sizeof(nomArchSalida)-1 - strlen(nomArchSalida));
+    char nomArchSalida[256] = "VIRUS_concatenar-horizontal_";
+    strncat(nomArchSalida, nomArchSinExt, sizeof(nomArchSalida)-1 - strlen(nomArchSalida));
+    strncat(nomArchSalida, "_",       sizeof(nomArchSalida)-1 - strlen(nomArchSalida));
     strncat(nomArchSalida, nomArch2, sizeof(nomArchSalida)-1 - strlen(nomArchSalida));
 
     FILE* archivoOut = fopen(nomArchSalida, "wb");
@@ -936,6 +930,7 @@ int concatenarHorizontal(HEADER* header1, FILE* archivo1, char* nomArch1,HEADER*
     free(row1);
     free(row2);
     free(dst);
+    free(nomArchSinExt);
     fclose(archivoOut);
     return EXITO;
 }
@@ -948,10 +943,12 @@ int concatenarVertical(HEADER* header1, FILE* archivo1, char* nomArch1,HEADER* h
     const unsigned char FILL_G = 70;
     const unsigned char FILL_R = 0;
 
+    char *nomArchSinExt = archivoSinExtension(nomArch1);
+
     // Nombre de salida
-    char nomArchSalida[256] = "virus_concatenar-vertical-";
-    strncat(nomArchSalida, nomArch1, sizeof(nomArchSalida)-1 - strlen(nomArchSalida));
-    strncat(nomArchSalida, "-",       sizeof(nomArchSalida)-1 - strlen(nomArchSalida));
+    char nomArchSalida[256] = "VIRUS_concatenar-vertical_";
+    strncat(nomArchSalida, nomArchSinExt, sizeof(nomArchSalida)-1 - strlen(nomArchSalida));
+    strncat(nomArchSalida, "_",       sizeof(nomArchSalida)-1 - strlen(nomArchSalida));
     strncat(nomArchSalida, nomArch2, sizeof(nomArchSalida)-1 - strlen(nomArchSalida));
 
     FILE* archivoOut = fopen(nomArchSalida, "wb");
@@ -1089,6 +1086,7 @@ int concatenarVertical(HEADER* header1, FILE* archivo1, char* nomArch1,HEADER* h
     free(row1);
     free(row2);
     free(dst);
+    free(nomArchSinExt);
     fclose(archivoOut);
     return EXITO;
 }

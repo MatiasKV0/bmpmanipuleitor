@@ -185,7 +185,7 @@ int verificarArchivo(FILE* arch, HEADER* header, bool imprimir)
 int tonalidadRojo(HEADER* header, FILE* archivo, float porcentaje, char* nomArch)
 {
 
-    char nomArchSalida[100] = "virus_tonalidad-roja-";
+    char nomArchSalida[128] = "VIRUS_tonalidad-roja-";
     char numero[20];
 
     sprintf(numero, "%.0f_", porcentaje);
@@ -232,7 +232,7 @@ int tonalidadRojo(HEADER* header, FILE* archivo, float porcentaje, char* nomArch
 int espejarHorizontal(HEADER* header, FILE* archivo, char*nomArch)
 {
 
-    char nomArchSalida[100] = "virus_espejar-horizontal-";
+    char nomArchSalida[128] = "VIRUS_espejar-horizontal_";
     strcat(nomArchSalida, nomArch);
 
     FILE *archivoEspejo = fopen(nomArchSalida, "wb");
@@ -263,14 +263,13 @@ int espejarHorizontal(HEADER* header, FILE* archivo, char*nomArch)
     for (unsigned int i = 0; i < header->alto; i++)
     {
         fread(fila, sizeof(t_pixel), header->ancho, archivo);
-        fread(paddingBytes, 1, padding, archivo); // Saltar padding original
+        fread(paddingBytes, 1, padding, archivo);
 
-        // Escribir fila invertida
         for (int j = header->ancho - 1; j >= 0; j--)
         {
             fwrite(&fila[j], sizeof(t_pixel), 1, archivoEspejo);
         }
-        fwrite(paddingBytes, 1, padding, archivoEspejo); // Mantener padding
+        fwrite(paddingBytes, 1, padding, archivoEspejo);
     }
 
 
@@ -281,7 +280,7 @@ int espejarHorizontal(HEADER* header, FILE* archivo, char*nomArch)
 
 int espejarVertical(HEADER* header, FILE* archivo, char* nomArch)
 {
-    char nomArchSalida[100] = "virus_espejar-vertical-";
+    char nomArchSalida[128] = "VIRUS_espejar-vertical_";
     strcat(nomArchSalida, nomArch);
 
     FILE *archivoEspejo = fopen(nomArchSalida, "wb");
@@ -303,7 +302,6 @@ int espejarVertical(HEADER* header, FILE* archivo, char* nomArch)
     int padding = (4 - (header->ancho * 3) % 4) % 4;
     unsigned char paddingBytes[3] = {0, 0, 0};
 
-    // Reservar memoria para una fila
     t_pixel *fila = malloc(sizeof(t_pixel) * header->ancho);
     if (!fila)
     {
@@ -311,17 +309,14 @@ int espejarVertical(HEADER* header, FILE* archivo, char* nomArch)
         return ERROR_MEM;
     }
 
-    // Espejar verticalmente: escribir las filas de abajo hacia arriba
     for (int i = 0; i < header->alto; i++)
     {
-        // Calcular posición de la fila (de abajo hacia arriba)
         long offsetFila = header->comienzoImagen + (long)i * (header->ancho * sizeof(t_pixel) + padding);
         fseek(archivo, offsetFila, SEEK_SET);
 
         fread(fila, sizeof(t_pixel), header->ancho, archivo);
-        fread(paddingBytes, 1, padding, archivo); // Saltar padding original
+        fread(paddingBytes, 1, padding, archivo);
 
-        // Escribir esta fila en la posición invertida
         long offsetDestino = header->comienzoImagen + (long)(header->alto - 1 - i) * (header->ancho * sizeof(t_pixel) + padding);
         fseek(archivoEspejo, offsetDestino, SEEK_SET);
 
@@ -334,3 +329,14 @@ int espejarVertical(HEADER* header, FILE* archivo, char* nomArch)
     return EXITO;
 }
 
+char* archivoSinExtension(const char* nom) {
+    char *punto = strrchr(nom, '.');
+    size_t len = (punto) ? (size_t)(punto - nom) : strlen(nom);
+
+    char *nuevo = malloc(len + 1);
+    if (!nuevo) return NULL;
+
+    strncpy(nuevo, nom, len);
+    nuevo[len] = '\0';
+    return nuevo;
+}
