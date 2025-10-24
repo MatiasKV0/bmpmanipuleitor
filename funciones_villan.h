@@ -7,6 +7,7 @@ bool leerHeader(FILE* archivo,HEADER* header);
 bool cargarHeader(FILE* archivo, HEADER* header);
 void imprimirInfo(HEADER* header, char* nomArch);
 void imprimirHelp();
+char* archivoSinExtension(const char* nom);
 
 int tonalidadRojo(HEADER* header, FILE* archivo, float porcentaje, char* nomArch);
 int espejarHorizontal(HEADER* header, FILE* archivo, char*nomArch);

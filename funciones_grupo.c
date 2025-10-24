@@ -21,6 +21,14 @@ int procesar_imagen(int argc, char* argv[])
     //--------------------
     // ARGUMENTOS
     //--------------------
+
+    if (argc == 1)
+    {
+        printf("[ERROR] No se ingresaron parametros.\n");
+        printf("Use '--help' para ver las opciones disponibles.\n");
+        return ERROR_ARGS;
+    }
+
     for (int i = 1; i < argc; i++)
     {
         if (strcmp(argv[i], "--help") == 0)
@@ -49,6 +57,13 @@ int procesar_imagen(int argc, char* argv[])
         }
     }
 
+    // --Help
+    if (mostrarAyuda)
+    {
+        imprimirHelp();
+        return EXITO;
+    }
+
     if (!nombreArchivo)
     {
         printf("[ERROR] No se proporciono el nombre del archivo.\n");
@@ -75,13 +90,6 @@ int procesar_imagen(int argc, char* argv[])
     //--------------------------
     // UTILIDADES
     //--------------------------
-
-    // --Help
-    if (mostrarAyuda)
-    {
-        imprimirHelp();
-        return EXITO;
-    }
 
     // --Verbose
     if (modoVerbose)
@@ -297,12 +305,21 @@ int procesar_imagen(int argc, char* argv[])
         }
     }
 
+    if (!mostrarInfo && !soloValidar && CantArch == 0)
+    {
+        printf("[ERROR] No se especifico ninguna accion o filtro para aplicar a '%s'.\n", nombreArchivo);
+        printf("Use '--help' para ver las opciones disponibles.\n");
+        fclose(archivoEntrada);
+        if (archivoEntrada2) fclose(archivoEntrada2);
+        return ERROR_ARGS;
+    }
+
     if (modoVerbose)
     {
         if (CantArch == 1) printf("[INFO] Proceso finalizado - %d archivo generado.\n", CantArch);
         else               printf("[INFO] Proceso finalizado - %d archivos generados.\n", CantArch);
     }
-    else if(status == EXITO)
+    else if(status == EXITO || CantArch>0)
     {
         printf("Proceso finalizado exitosamente.\n");
     }
