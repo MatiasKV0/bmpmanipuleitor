@@ -5,9 +5,11 @@
 int verificarArchivo(FILE* arch, HEADER* header, bool imprimir);
 bool leerHeader(FILE* archivo,HEADER* header);
 bool cargarHeader(FILE* archivo, HEADER* header);
-void imprimirInfo(HEADER* header, char* nomArch);
+
 void imprimirHelp();
+void imprimirInfo(HEADER* header, char* nomArch);
 char* archivoSinExtension(const char* nom);
+void eliminarDuplicados(int *argc, char *argv[]);
 
 int tonalidadRojo(HEADER* header, FILE* archivo, float porcentaje, char* nomArch);
 int espejarHorizontal(HEADER* header, FILE* archivo, char*nomArch);
