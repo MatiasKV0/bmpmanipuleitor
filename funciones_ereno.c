@@ -232,9 +232,6 @@ int aumentarContraste(HEADER* header, FILE* archivo, float porcentaje, char* nom
 
 int reducirContraste(HEADER* header, FILE* archivo, float porcentaje, char* nomArch)
 {
-
-    if (porcentaje < 0.0f) porcentaje = 0.0f;
-    if (porcentaje > 100.0f) porcentaje = 100.0f;
     const float MIN_FACTOR = 0.05f;
     float factor = 1.0f - (porcentaje / 100.0f);
     if (factor < MIN_FACTOR) factor = MIN_FACTOR;

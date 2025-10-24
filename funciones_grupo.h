@@ -11,10 +11,6 @@
 #define ERROR_ARCH 2
 #define ERROR_MEM 3
 #define ERROR_BMP 4
-#define max(a, b) ((a) > (b) ? (a) : (b))
-#define min(a, b) ((a) < (b) ? (a) : (b))
-#define MAX_ANCHO 240
-#define MAX_ALTO 360
 
 typedef struct {
     unsigned short tipobm;           // "BM"
@@ -52,7 +48,6 @@ typedef struct {
 // Entrega: No
 
 int procesar_imagen(int argc, char* argv[]);
-HEADER cargaCabecera(FILE* archivoEntrada, FILE* archivoNegativo);
 
 typedef struct
 {
